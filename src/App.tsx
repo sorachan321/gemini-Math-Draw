@@ -1,8 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenAI, ThinkingLevel } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Send, Plus, X, Loader2, Bot, Menu, MessageSquare, Settings, PlusCircle, ChevronDown, Key } from 'lucide-react';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
+import { Send, Plus, X, Loader2, Bot, Menu, MessageSquare, Settings, PlusCircle, ChevronDown, Key, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { TikzRenderer } from './components/TikzRenderer';
 
 type Message = {
@@ -36,7 +39,9 @@ export default function App() {
   const currentChat = chats.find(c => c.id === currentChatId) || chats[0];
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   useEffect(() => {
@@ -157,7 +162,7 @@ export default function App() {
         className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
           fixed md:relative z-30 w-72 h-full bg-[#f9f9f9] border-r border-gray-200 transition-transform duration-300 ease-in-out flex flex-col`}
       >
-        <div className="p-4 flex items-center justify-between">
+        <div className="p-4 flex items-center justify-between gap-2">
           <button 
             onClick={createNewChat}
             className="flex-1 flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-700 transition-colors shadow-sm"
@@ -167,7 +172,14 @@ export default function App() {
           </button>
           <button 
             onClick={() => setIsSidebarOpen(false)}
-            className="md:hidden ml-2 p-2 text-gray-500 hover:bg-gray-200 rounded-lg"
+            className="p-2 text-gray-500 hover:bg-gray-200 rounded-lg transition-colors hidden md:block"
+            title="收起侧边栏"
+          >
+            <PanelLeftClose className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            className="md:hidden p-2 text-gray-500 hover:bg-gray-200 rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -228,8 +240,9 @@ export default function App() {
           <button 
             onClick={() => setIsSidebarOpen(true)}
             className="absolute top-4 left-4 z-20 p-2 bg-white border border-gray-200 rounded-xl shadow-sm text-gray-600 hover:bg-gray-50 transition-colors"
+            title="打开侧边栏"
           >
-            <Menu className="w-5 h-5" />
+            <PanelLeftOpen className="w-5 h-5" />
           </button>
         )}
 
@@ -275,14 +288,18 @@ export default function App() {
                     }`}>
                       <div className="prose prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-gray-50 prose-pre:text-gray-800 prose-pre:border prose-pre:border-gray-200">
                         <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
+                          remarkPlugins={[remarkGfm, remarkMath]}
+                          rehypePlugins={[rehypeKatex]}
                           components={{
+                            img(props: any) {
+                              return <img {...props} onLoad={scrollToBottom} className="max-w-full h-auto rounded-lg my-2" />;
+                            },
                             code(props: any) {
                               const { children, className, node, ...rest } = props;
                               const match = /language-(\w+)/.exec(className || '');
                               
                               if (match && match[1] === 'tikz') {
-                                return <TikzRenderer code={String(children).replace(/\n$/, '')} />;
+                                return <TikzRenderer code={String(children).replace(/\n$/, '')} onResize={scrollToBottom} />;
                               }
                               
                               return match ? (
