@@ -1,0 +1,5 @@
+{
+  "name": "Gemini Math & Geometry Tutor",
+  "description": "A chat application powered by Gemini 3.1 Pro that can render TikZ geometry code into SVG images in real-time.",
+  "requestFramePermissions": []
+}
